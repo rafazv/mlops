@@ -4,6 +4,7 @@ import logging
 import numpy as np
 from pydantic import BaseModel
 from fastapi import FastAPI
+from dagshub import init
 
 
 class FetalHealthData(BaseModel):
@@ -45,24 +46,18 @@ def load_model():
     Raises:
         None
     """
-    logging.info('reading model...')
-    MLFLOW_TRACKING_URI = 'https://dagshub.com/renansantosmendes/puc_lectures_mlops.mlflow'
-    MLFLOW_TRACKING_USERNAME = 'renansantosmendes'
-    MLFLOW_TRACKING_PASSWORD = '6d730ef4a90b1caf28fbb01e5748f0874fda6077'
-    os.environ['MLFLOW_TRACKING_USERNAME'] = MLFLOW_TRACKING_USERNAME
-    os.environ['MLFLOW_TRACKING_PASSWORD'] = MLFLOW_TRACKING_PASSWORD
-    logging.info('setting mlflow...')
-    mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
-    logging.info('creating client..')
-    client = mlflow.MlflowClient(tracking_uri=MLFLOW_TRACKING_URI)
-    logging.info('getting registered model...')
-    registered_model = client.get_registered_model('fetal_health')
-    logging.info(registered_model)
-    logging.info('read model...')
-    run_id = registered_model.latest_versions[-1].run_id
-    loaded_model = mlflow.pyfunc.load_model(f'runs:/{run_id}/model')
-    logging.info(loaded_model)
-    return loaded_model
+    logging.info('Reading model...')
+
+    repo_owner = 'rafazv'
+    repo_name = 'my-first-repo'
+
+    init(repo_owner=repo_owner, repo_name=repo_name, mlflow=True)
+
+    run_id = "134ca4b99a4e49a4ae6f27fbd1436ca2"
+    model = mlflow.pyfunc.load_model(f"runs:/{run_id}/model")
+    logging.info("Model successfully loaded!")
+
+    return model
 
 
 @app.on_event(event_type='startup')
