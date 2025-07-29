@@ -65,18 +65,71 @@ def create_model(X):
     return model
 
 def config_mlflow():
-    dagshub.init(repo_owner='rafazv', repo_name='my-first-repo', mlflow=True)
+    """
+    Configures the MLflow settings for tracking experiments.
+
+    Sets the MLFLOW_TRACKING_USERNAME and MLFLOW_TRACKING_PASSWORD environment
+     variables to provide authentication for accessing the MLflow tracking server.
+
+    Sets the MLflow tracking URI to 'https://dagshub.com/renansantosmendes/mlops-ead.mlflow'
+    to specify the location where the experiment data will be logged.
+
+    Enables autologging of TensorFlow models by calling `mlflow.tensorflow.autolog()`.
+    This will automatically log the TensorFlow models, input examples, and model signatures
+    during training.
+
+    Parameters:
+        None
+
+    Returns:
+        None
+    """
+    os.environ['MLFLOW_TRACKING_USERNAME'] = 'rafazv'
+    os.environ['MLFLOW_TRACKING_PASSWORD'] = '43666ca0ffac61c2c341d5aa8066cf65dbcec4df'
+    mlflow.set_tracking_uri('https://dagshub.com/rafazv/my-first-repo.mlflow')
+
     mlflow.tensorflow.autolog(log_models=True,
                               log_input_examples=True,
                               log_model_signatures=True)
 
-def train_model(model, X, y, is_train=True):
-    with mlflow.start_run():
-      model.fit(X,
-                y,
-                epochs=50,
-                validation_split=0.2,
-                verbose=3)
+def train_model(model, X_train, y_train, is_train=True):
+    """
+    Train a machine learning model using the provided data.
+
+    Parameters:
+    - model: The machine learning model to train.
+    - X_train: The training data.
+    - y_train: The target labels.
+    - is_train: (optional) Flag indicating whether to register the
+    model with mlflow.
+                Defaults to True.
+
+    Returns:
+    None
+    """
+    with mlflow.start_run(run_name='experiment_mlops_ead') as run:
+        model.fit(X_train,
+                  y_train,
+                  epochs=50,
+                  validation_split=0.2,
+                  verbose=3)
+    if is_train:
+        run_uri = f'runs:/{run.info.run_id}'
+        mlflow.register_model(run_uri, 'fetal_health')
+
+# def config_mlflow():
+#     dagshub.init(repo_owner='rafazv', repo_name='my-first-repo', mlflow=True)
+#     mlflow.tensorflow.autolog(log_models=True,
+#                               log_input_examples=True,
+#                               log_model_signatures=True)
+
+# def train_model(model, X, y, is_train=True):
+#     with mlflow.start_run():
+#       model.fit(X,
+#                 y,
+#                 epochs=50,
+#                 validation_split=0.2,
+#                 verbose=3)
 
 if __name__ == '__main__':
     X, y = read_data()
